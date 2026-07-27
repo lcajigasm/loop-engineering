@@ -1,0 +1,9 @@
+{
+  "name": "loop-engineering",
+  "description": "Drive any project as verified loops (goal -> action -> feedback -> stop): /le commands, goal maps, receipts, budgets and stop hooks.",
+  "author": {
+    "name": "lcajigasm",
+    "url": "https://github.com/lcajigasm"
+  },
+  "homepage": "https://github.com/lcajigasm/loop-engineering"
+}
