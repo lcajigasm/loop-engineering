@@ -58,9 +58,11 @@ This repository is a Claude Code plugin marketplace:
 /plugin install loop-engineering@loop-engineering
 ```
 
-Plugin commands are namespaced by the plugin (check `/help` for the exact
-names after install; the `loop-engineering` skill and its natural-language
-triggering work identically to the script install). The plugin has no
+Plugin commands are namespaced by the plugin: `/loop-engineering:le:start`,
+`/loop-engineering:le:auto`, … (verified on Claude Code 2.1.212; the
+`loop-engineering` skill and its natural-language triggering work
+identically to the script install, which gives you the shorter `/le:*`
+names instead). The plugin has no
 explicit version: every commit to `main` counts as a new version, so
 `/plugin update` tracks the repo. The `core/` directory reaches the plugin
 through an in-repo symlink — on Windows, clone with symlinks enabled or use
