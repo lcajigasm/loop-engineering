@@ -530,3 +530,5 @@ wording) — the commands will tell you so rather than force the pattern.
 Credits: methodology guide by [cocodedk](https://github.com/cocodedk/loop-engineering);
 origin workflow by Boris Cherny. This package generalizes the working setup
 of a real project (a Rust editor) into a stack-agnostic, installable skill.
+
+License: [MIT](LICENSE).

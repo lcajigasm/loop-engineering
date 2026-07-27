@@ -552,3 +552,5 @@ Créditos: guía de la metodología por [cocodedk](https://github.com/cocodedk/l
 workflow original de Boris Cherny. Este paquete generaliza el montaje real
 de un proyecto vivo (un editor en Rust) en un skill instalable y agnóstico
 de stack.
+
+Licencia: [MIT](LICENSE).
