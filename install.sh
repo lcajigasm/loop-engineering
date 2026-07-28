@@ -107,7 +107,7 @@ if [ "$DO_CODEX" = 1 ]; then
   if [ -n "$PROJECT" ]; then
     root="$PROJECT/.agents"
   else
-    root="$HOME/.codex"
+    root="$HOME/.agents"
   fi
   install_adapter "Codex" "$root/skills/loop-engineering" \
     "$SRC/codex/skills/loop-engineering/SKILL.md"

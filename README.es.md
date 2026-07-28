@@ -118,9 +118,9 @@ nueva, así que `/plugin update` sigue el repo. `core/` llega al plugin por
 un symlink interno del repo — en Windows, clona con symlinks habilitados o
 usa la instalación por script.
 
-Codex no tiene un marketplace abierto equivalente; usa el script o la
-instalación manual (una instalación directa del skill por URL de GitHub se
-quedaría sin `core/`, que en este repo vive fuera del directorio del skill).
+Codex admite plugins, pero este repositorio no está empaquetado como uno para
+Codex. Usa el script o la instalación manual; copiar solo el adaptador del
+skill dejaría fuera su directorio `core/` obligatorio.
 
 ### Script
 
@@ -144,7 +144,7 @@ Qué se instala dónde (ámbito global):
 |---|---|---|
 | Claude Code | `~/.claude/skills/loop-engineering/` (SKILL.md + `core/`) | activación por lenguaje natural + el core compartido |
 | Claude Code | `~/.claude/commands/le/*.md` | `/le:start`, `/le:auto`, … |
-| Codex | `~/.codex/skills/loop-engineering/` (SKILL.md + `core/`) | skill implícito + el core compartido |
+| Codex | `~/.agents/skills/loop-engineering/` (SKILL.md + `core/`) | skill implícito + el core compartido |
 | Codex | `~/.codex/prompts/le-*.md` | `/prompts:le-start`, … |
 
 `--project <path>` instala en `<path>/.claude/{skills,commands}` y
@@ -164,9 +164,9 @@ cp -R core ~/.claude/skills/loop-engineering/core
 cp -R claude-code/commands/le ~/.claude/commands/le
 
 # Codex
-mkdir -p ~/.codex/skills/loop-engineering ~/.codex/prompts
-cp codex/skills/loop-engineering/SKILL.md ~/.codex/skills/loop-engineering/
-cp -R core ~/.codex/skills/loop-engineering/core
+mkdir -p ~/.agents/skills/loop-engineering ~/.codex/prompts
+cp codex/skills/loop-engineering/SKILL.md ~/.agents/skills/loop-engineering/
+cp -R core ~/.agents/skills/loop-engineering/core
 cp codex/prompts/*.md ~/.codex/prompts/
 ```
 
@@ -177,7 +177,7 @@ cp codex/prompts/*.md ~/.codex/prompts/
 claude plugin uninstall loop-engineering
 # instalación por script/manual
 rm -rf ~/.claude/skills/loop-engineering ~/.claude/commands/le
-rm -rf ~/.codex/skills/loop-engineering ~/.codex/prompts/le-*.md
+rm -rf ~/.agents/skills/loop-engineering ~/.codex/prompts/le-*.md
 ```
 
 Los ficheros generados *dentro* de tus proyectos (`docs/GOALS.md`,
@@ -369,7 +369,8 @@ docs/
 └── adr/                  # decisiones numeradas; la 0001 registra la adopción del método
 scripts/verify-loop.sh    # runner headless de bucles, gates adaptados a tu stack
 CLAUDE.md / AGENTS.md     # Working Agreement añadido entre marcadores gestionados
-.claude/hooks/stop-verify.sh + .claude/settings.json   # stop hook (opcional)
+.claude/hooks/stop-verify.sh + .claude/settings.json   # stop hook de Claude (opcional)
+.codex/hooks/stop-verify.sh + .codex/hooks.json         # Stop hook de Codex (opcional)
 .le-active-verify         # marcador transitorio: el gate del bucle en curso (gitignored)
 ```
 
@@ -441,11 +442,11 @@ deja de coincidir):
 | Capacidad | Claude Code | Codex | Compensación en Codex |
 |---|---|---|---|
 | Comandos con argumentos | `/le:<name>` (`~/.claude/commands/le/`) | `/prompts:le-<name>` (`~/.codex/prompts/`; deprecados upstream pero funcionales, y el único mecanismo de Codex con argumentos) | se instala también el skill para activación por lenguaje natural |
-| Invocación implícita / lenguaje natural | skill (`~/.claude/skills/`) | skill (`~/.codex/skills/`, estándar Agent Skills; sin argumentos) | los prompts cubren la invocación explícita |
-| Distribución vía marketplace de plugins | sí — este repo | sin marketplace abierto | repo de GitHub + install.sh |
-| Stop hook (bloquea el "hecho" con gate en rojo) | sí (`.claude/settings.json`, exit 2) | **sin hooks** | auto-comprobación obligatoria en el spec de cada comando: re-ejecutar VERIFY en una invocación fresca antes de declarar hecho; pegar la salida en verde en el receipt |
-| Worktrees paralelos | `claude --worktree <name>` | **sin flag de worktree** | `parallel` emite un plan secuencial alternativo (`git worktree` manual es posible pero sin gestión) |
-| Scheduler | `/schedule`, tareas programadas | **ninguno** | cron externo + `codex exec`, o dejar el trabajo desatendido del lado de Claude Code |
+| Invocación implícita / lenguaje natural | skill (`~/.claude/skills/`) | skill (`~/.agents/skills/`, estándar Agent Skills; sin argumentos) | los prompts cubren la invocación explícita |
+| Distribución vía marketplace de plugins | sí — este repo | admite plugins; este repo no está empaquetado para Codex | install.sh |
+| Stop hook (bloquea el "hecho" con gate en rojo) | sí (`.claude/settings.json`, exit 2) | sí (`.codex/hooks.json`, exit 2; requiere confianza) | hook opcional más VERIFY independiente obligatorio antes de declarar hecho |
+| Worktrees paralelos | `claude --worktree <name>` | CLI: sin flag; Desktop: worktrees gestionados | `parallel` emite un plan secuencial seguro para CLI (`git worktree` manual es posible) |
+| Scheduler | `/schedule`, tareas programadas | CLI: sin gestor; Desktop/web: tareas programadas | usa el scheduler de desktop/web o cron externo + `codex exec` |
 | Runner headless de bucles | `claude -p` + `--resume` (verify-loop.sh) | `codex exec` existe pero verify-loop.sh apunta al CLI de Claude | correr verify-loop.sh con Claude Code, o conducir los bucles interactivamente |
 | Instalación por proyecto | `.claude/{skills,commands}` | `.agents/skills/` (solo skills; los prompts son solo globales) | el snippet de AGENTS.md hace que cualquier sesión sea consciente del método |
 

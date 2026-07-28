@@ -123,7 +123,7 @@ and relaunch"**. It is:
 - **Parallel only for disjoint scopes.** Two goals may run concurrently only
   if they touch different scopes and neither depends on an API the other has
   not stabilized. In Claude Code, use git worktrees (`claude --worktree
-  <name>`); Codex has no worktree flag — run sequentially or manage
+  <name>`); Codex CLI has no worktree flag — run sequentially or manage
   `git worktree` by hand.
 - **Chained for milestones.** A milestone is a chain of loops ending in a
   closing goal that runs the full project-wide gate.

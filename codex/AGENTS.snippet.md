@@ -11,7 +11,7 @@ anyone's memory: `docs/GOALS.md` (goal map), `docs/receipts/` (run logs),
 `docs/STATUS.md` (what actually exists), `docs/adr/` (decisions). Read them
 before writing code; resume from them, don't ask the human to re-explain.
 
-Method reference: `~/.codex/skills/loop-engineering/core/METHODOLOGY.md`.
+Method reference: `~/.agents/skills/loop-engineering/core/METHODOLOGY.md`.
 Commands: `/prompts:le-help` lists them; `/prompts:le-auto` resumes work.
 
 Hard rules: nothing simulated; a goal is done only when its VERIFY command

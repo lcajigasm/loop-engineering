@@ -17,10 +17,10 @@ Methodology, canonical command spec and templates live in this skill's
   commands are also invocable explicitly as `/prompts:le-<name>`.
 - `core/templates/` and `core/scripts/` — files `start` generates.
 
-Codex capability notes (also in COMMANDS.md): no stop hooks, no worktree
-flag, no scheduler. Therefore, before declaring ANY goal done, re-run its
-VERIFY command in a fresh invocation and record that output in the receipt
-— the self-check replaces the hook. `parallel` emits a sequential plan.
+Codex CLI supports Stop hooks, but has no worktree flag or scheduled-task
+manager. Offer the optional Stop hook during `start`; regardless, before
+declaring ANY goal done, re-run its VERIFY command in a fresh invocation and
+record that output in the receipt. `parallel` emits a sequential plan.
 
 Detect project state first: `docs/GOALS.md` with a `# Goals —` header means
 an initialized project — read it plus `docs/receipts/` before proposing

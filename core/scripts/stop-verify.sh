@@ -1,8 +1,8 @@
 #!/bin/sh
-# stop-verify.sh — generic Stop-hook gate for Claude Code.
+# stop-verify.sh — generic Stop-hook gate for Claude Code and Codex CLI.
 #
-# Wired as a Stop hook in .claude/settings.json (see claude-code/hooks/
-# README.md). Blocks ending a session while the active loop's gate is red —
+# Wired as a Stop hook in .claude/settings.json or .codex/hooks.json. Blocks
+# ending a session while the active loop's gate is red —
 # the technical enforcement of rule #1 ("nothing simulated"): the agent
 # memory file is context, not enforcement; this is what actually stops a
 # session from being declared done while the verify still fails.
@@ -15,8 +15,8 @@
 # Safety valve: after MAX_BLOCKS consecutive blocks in one session the hook
 # lets the session end anyway (marking the state clearly) — a permanently
 # red gate needs the `stuck` protocol, not an unclosable terminal.
-# Hook contract verified against Claude Code 2.1.212: exit 2 blocks the
-# stop and feeds stderr back to Claude; stdin is JSON with session_id.
+# Hook contract: exit 2 blocks/continues the turn and feeds stderr back to the
+# agent; stdin is JSON with session_id.
 set -eu
 cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 

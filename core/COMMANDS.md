@@ -28,12 +28,12 @@ Adapter capability notes (referenced by the specs below):
 
 - **Claude Code** has stop hooks, `--worktree`, headless mode (`claude -p`),
   and `/le:*` commands with arguments.
-- **Codex** has no hooks, no worktree flag, no scheduler. Compensation, in
-  every command that runs a loop: before declaring any goal done, the agent
-  MUST re-run the VERIFY command itself in a fresh invocation and paste the
-  final passing output into the receipt. There is no external enforcement, so
-  the spec makes the self-check an explicit, non-skippable step. `parallel`
-  on Codex emits a sequential plan instead of worktree launches.
+- **Codex CLI** has Stop hooks, but no worktree flag or scheduled-task
+  manager. Offer its optional Stop hook during `start`. In every command that
+  runs a loop, before declaring any goal done, the agent MUST re-run the
+  VERIFY command itself in a fresh invocation and paste the final passing
+  output into the receipt. `parallel` on Codex CLI emits a sequential plan
+  instead of worktree launches.
 
 ---
 
@@ -116,12 +116,15 @@ Create inside the target project (all in English, from `templates/`):
    file), with the `--allowed-tools` default and the example usage in its
    header adapted to the project's actual stack (the verify commands
    discovered in Phase 2).
-7. **Claude Code only, and only after asking the user**: the stop hook —
-   copy `scripts/stop-verify.sh` to `.claude/hooks/stop-verify.sh`, make it
+7. **Only after asking the user**, offer the Stop hook. For Claude Code, copy
+   `scripts/stop-verify.sh` to `.claude/hooks/stop-verify.sh`, make it
    executable, and wire it in `.claude/settings.json`:
-   `{"hooks": {"Stop": [{"hooks": [{"type": "command", "command": ".claude/hooks/stop-verify.sh"}]}]}}`
-   (merge into existing settings, don't overwrite). On Codex, skip and note
-   the self-check compensation instead.
+   `{"hooks":{"Stop":[{"hooks":[{"type":"command","command":".claude/hooks/stop-verify.sh"}]}]}}`.
+   For Codex CLI, copy it to `.codex/hooks/stop-verify.sh`, make it executable,
+   and wire it in `.codex/hooks.json`:
+   `{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"sh \"$(git rev-parse --show-toplevel)/.codex/hooks/stop-verify.sh\"","timeout":30}]}]}}`.
+   Merge existing configuration; never overwrite it. Codex requires the user
+   to review and trust non-managed hooks before they run.
 8. Suggest adding `.le-active-verify` to `.gitignore`.
 
 ### Phase 4 — Handoff
@@ -179,8 +182,8 @@ loop. Safe to run at any moment, any number of times.
    green or a STOP condition fires. Track iteration count and
    identical-failure count honestly — an iteration is one
    implement-then-verify cycle.
-   - *Codex compensation*: before declaring green, re-run VERIFY once more
-     in a fresh invocation and use that output as the record.
+   - *Codex check*: before declaring green, re-run VERIFY once more in a
+     fresh invocation and use that output as the record.
 4. **Close out**: write the receipt (from `docs/receipts/TEMPLATE.md`);
    set the goal's mark (`[x]` / `[!]` / `[$]`) in `GOALS.md`; delete
    `.le-active-verify`; update `STATUS.md` if behavior changed; if the run
@@ -335,7 +338,7 @@ Analyze pending goals and propose what can run concurrently.
    `claude --worktree <goal-slug>` plus the first message to give each
    session (`/le:goal G-xxx`). Remind: integrate one branch at a time, each
    re-verified with an independent `verify` run before merge.
-3. Codex (no worktree flag): emit the sequential fallback plan — the same
+3. Codex CLI (no worktree flag): emit the sequential fallback plan — the same
    goals in dependency-safe order — and note that manual `git worktree` +
    one Codex session per tree is possible but unmanaged.
 4. Execute nothing; this command only plans.

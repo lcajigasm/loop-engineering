@@ -4,9 +4,9 @@ description: Dashboard: milestone progress, goals passed/stuck/pending, what's e
 Run the loop-engineering `status` command.
 
 Follow the canonical spec's `status` section exactly, including the Codex
-capability notes (no hooks: re-run VERIFY yourself in a fresh invocation
+capability notes (optional Stop hook; re-run VERIFY yourself in a fresh invocation
 before declaring any goal done): read
-`~/.codex/skills/loop-engineering/core/COMMANDS.md` (or, if this project has
+`~/.agents/skills/loop-engineering/core/COMMANDS.md` (or, if this project has
 its own copy, `.agents/skills/loop-engineering/core/COMMANDS.md`).
 Methodology and templates live next to it. Converse in the user's language;
 write files in English.
