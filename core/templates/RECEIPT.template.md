@@ -9,13 +9,20 @@ the work was left without a human having to explain it.
 - Goal: <one sentence, the verifiable condition — not a task list>
 - Scope: <module/package>
 - Verify: `<exact command that decided pass/fail>`
+- Plan: docs/plans/<goal-id>-<slug>.md
 - Iterations: <n> / <max>
 - Result: passed | stuck | budget-exhausted
 - Opened: <YYYY-MM-DD>
 - Closed: <YYYY-MM-DD>
+- Evidence:
+  - Revision: `<HEAD commit after the final VERIFY>`
+  - Changed files: `<git diff --name-only <base>...HEAD, or explicit list>`
+  - Final VERIFY: `<exact command>`
+  - Output: `<verbatim final output or path to a checked-in log>`
+- Scope check: passed | exception documented in plan | failed
 - Human check: <only for `Verify: human` goals — who checked, what they
   observed. Delete this line otherwise.>
 - Notes: what failed along the way, what the fix was, decisions taken that
   the goal text didn't specify, anything left explicitly out of scope, and
   whether any lesson is worth promoting to the agent memory file (see
-  METHODOLOGY.md, "four memory layers").
+  METHODOLOGY.md, "project record").

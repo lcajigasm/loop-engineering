@@ -2,8 +2,9 @@
 ## Working Agreement (loop engineering)
 
 This project is driven as verified loops. Full method:
-`docs/GOALS.md` (the goal map) · `docs/receipts/` (run logs) ·
-`docs/STATUS.md` (what actually exists) · `docs/adr/` (decisions).
+`docs/GOALS.md` (the goal map) · `docs/plans/` (intent and scope exceptions)
+· `docs/receipts/` (run logs and evidence) · `docs/STATUS.md` (what actually
+exists) · `docs/adr/` (decisions).
 
 Non-negotiable rules:
 
@@ -27,7 +28,11 @@ Non-negotiable rules:
 6. **Memory discipline.** A correction that repeats goes here (this file);
    decisions go to `docs/adr/`; reality to `docs/STATUS.md`; every loop run
    to `docs/receipts/`.
-7. **When a target is unreachable, stop and report** with alternatives —
+7. **Plan and evidence first.** Before editing, write the goal plan (intended
+   files, phases, risks, alternatives). Before passing a goal, record the
+   final VERIFY command/output, revision and changed files in its receipt and
+   compare them with Scope; document every exception in the plan.
+8. **When a target is unreachable, stop and report** with alternatives —
    explicitly preferred over shipping something that looks like it works.
 
 Durable corrections (append below; one imperative rule per line, with its

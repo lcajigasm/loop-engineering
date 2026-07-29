@@ -10,7 +10,7 @@
 methodology as an installable skill for **Claude Code** and **OpenAI Codex
 CLI**: one shared core (methodology, command spec, templates, scripts), two
 thin adapters. Install once globally, initialize any project with `start`,
-drive it with 12 commands.
+drive it with 14 commands.
 
 ```mermaid
 flowchart LR
@@ -70,15 +70,16 @@ label is marketing, the mechanics are real. Method guide:
 
 - **`core/`** — the single source of truth both adapters defer to:
   - [`METHODOLOGY.md`](core/METHODOLOGY.md) — loop anatomy, verification
-    principles, the four memory layers, budgets and the stuck protocol,
+    principles, project records, budgets and the stuck protocol,
     orchestration, when *not* to loop.
   - [`COMMANDS.md`](core/COMMANDS.md) — the canonical behavioral spec of all
-    12 commands.
-  - [`templates/`](core/templates/) — goal map, status ledger, receipt, ADR,
-    working agreement, project brief.
+    14 commands.
+  - [`templates/`](core/templates/) — goal map, plan, integration manifest,
+    capabilities inventory, status ledger, receipt, ADR, working agreement,
+    project brief.
   - [`scripts/`](core/scripts/) — `verify-loop.sh` (headless
-    act→verify→re-prompt runner) and `stop-verify.sh` (Claude Code stop-hook
-    gate).
+    act→verify→re-prompt runner), `watch-verify.sh` (bounded local
+    revalidation) and `stop-verify.sh` (Claude Code stop-hook gate).
 - **`claude-code/`** — thin adapter: `/le:*` commands, a natural-language
   skill, and this repo doubles as an installable **plugin marketplace**.
 - **`codex/`** — thin adapter: `/prompts:le-*` prompts, a skill for implicit
@@ -244,6 +245,8 @@ Every command exists in both adapters. Full behavioral specs live in
 | [`close-milestone`](#close-milestone-id) `<id>` | Receipts check → full gate → STATUS → release notes → tag proposal |
 | [`memory`](#memory-lesson) `<lesson>` | Promote a correction to durable memory |
 | [`parallel`](#parallel) | Propose concurrent loops in disjoint scopes |
+| [`watch`](#watch-goal-id-minutes) `<goal-id> [minutes]` | Bounded local revalidation after commits touch a scope |
+| [`review`](#review-goal-id) `<goal-id>` | Read-only plan, diff and evidence handoff |
 | [`help`](#help) | The method + what to run right now |
 
 ### start `[file|url]`
@@ -340,7 +343,20 @@ refuses duplicates.
 Reads pending goals, proposes which can run concurrently (disjoint scopes
 only), and emits the launch commands — `claude --worktree <slug>` +
 `/le:goal G-xxx` per goal on Claude Code; a sequential fallback plan on
-Codex. Plans only; executes nothing.
+Codex. It also writes a local integration manifest with overlap checks, merge
+order and post-merge gates. Plans only; executes nothing.
+
+### watch `<goal-id> [minutes]`
+
+Bounded local observation: after a new local commit touches the goal's Scope,
+run its gate and append raw evidence. It never edits, fetches, pushes or
+restarts a loop; it stops at the time budget or three identical failures.
+
+### review `<goal-id>`
+
+Read-only handoff containing the plan, intended versus changed files, risks,
+scope exceptions, final verification evidence and open questions. It creates
+no PR, branch or tag.
 
 ### help
 
@@ -354,16 +370,19 @@ docs/
 ├── GOALS.md              # the exhaustive goal map — every goal, loop-shaped
 ├── STATUS.md             # what actually exists; updated with the change that alters behavior
 ├── PROJECT_BRIEF.md      # the functional source (written by start's interview path)
+├── CAPABILITIES.md        # relevant existing CI, hooks, skills and MCPs
+├── plans/                # one plan per goal + integration manifests + TEMPLATE.md
 ├── receipts/             # one file per loop run + TEMPLATE.md
 └── adr/                  # numbered decisions; 0001 records adopting this method
 scripts/verify-loop.sh    # headless loop runner, gates adapted to your stack
+scripts/watch-verify.sh   # bounded local revalidation after commits
 CLAUDE.md / AGENTS.md     # Working Agreement appended between managed markers
 .claude/hooks/stop-verify.sh + .claude/settings.json   # (opt-in) Claude stop hook
 .codex/hooks/stop-verify.sh + .codex/hooks.json         # (opt-in) Codex Stop hook
 .le-active-verify         # transient marker: the running loop's gate (gitignored)
 ```
 
-### The four memory layers
+### The project record
 
 | Layer | Stores | Written when |
 |---|---|---|

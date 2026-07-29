@@ -11,7 +11,7 @@
 como un skill instalable para **Claude Code** y **OpenAI Codex CLI**: un
 núcleo compartido (metodología, spec de comandos, plantillas, scripts) y dos
 adaptadores finos. Se instala una vez en ámbito global, se inicializa
-cualquier proyecto con `start`, y se conduce con 12 comandos.
+cualquier proyecto con `start`, y se conduce con 14 comandos.
 
 ```mermaid
 flowchart LR
@@ -77,15 +77,16 @@ método: [cocodedk/loop-engineering](https://github.com/cocodedk/loop-engineerin
 - **`core/`** — la única fuente de verdad a la que remiten ambos
   adaptadores:
   - [`METHODOLOGY.md`](core/METHODOLOGY.md) — anatomía del bucle,
-    principios de verificación, las cuatro capas de memoria, presupuestos y
+    principios de verificación, los artefactos del proyecto, presupuestos y
     protocolo de atasco, orquestación, cuándo *no* usar bucles.
   - [`COMMANDS.md`](core/COMMANDS.md) — el spec canónico de comportamiento
-    de los 12 comandos.
-  - [`templates/`](core/templates/) — mapa de goals, ledger de estado,
-    receipt, ADR, working agreement, brief de proyecto.
+    de los 14 comandos.
+  - [`templates/`](core/templates/) — mapa de goals, plan, manifiesto de
+    integración, inventario de capacidades, ledger de estado, receipt, ADR,
+    working agreement, brief de proyecto.
   - [`scripts/`](core/scripts/) — `verify-loop.sh` (runner headless de
-    actuar→verificar→re-promptear) y `stop-verify.sh` (gate de stop hook
-    para Claude Code).
+    actuar→verificar→re-promptear), `watch-verify.sh` (revalidación local
+    acotada) y `stop-verify.sh` (gate de stop hook para Claude Code).
 - **`claude-code/`** — adaptador fino: comandos `/le:*`, un skill de
   lenguaje natural, y este repo funciona además como **marketplace de
   plugins** instalable.
@@ -258,6 +259,8 @@ operador.
 | `close-milestone` `<id>` | Receipts → gate completo → STATUS → release notes → propuesta de tag |
 | `memory` `<lección>` | Promueve una corrección a memoria durable |
 | `parallel` | Propone bucles concurrentes en ámbitos disjuntos |
+| `watch` `<goal-id> [minutes]` | Revalida localmente y de forma acotada tras commits en el ámbito |
+| `review` `<goal-id>` | Entrega de solo lectura: plan, diff y evidencia |
 | `help` | El método + qué ejecutar ahora mismo |
 
 ### start `[file|url]`
@@ -351,7 +354,20 @@ exacto antes de aplicar; rechaza duplicados.
 Lee los goals pendientes, propone cuáles pueden correr en paralelo (solo
 ámbitos disjuntos), y emite los comandos de lanzamiento — `claude
 --worktree <slug>` + `/le:goal G-xxx` por goal en Claude Code; un plan
-secuencial alternativo en Codex. Solo planifica; no ejecuta nada.
+secuencial alternativo en Codex. También escribe un manifiesto de integración
+con solapamientos, orden de merge y gates posteriores. Solo planifica.
+
+### watch `<goal-id> [minutes]`
+
+Observación local acotada: tras un commit local que toca el Scope del goal,
+corre su gate y añade evidencia cruda. No edita, hace fetch/push ni relanza
+bucles; para al agotar el tiempo o tras tres fallos idénticos.
+
+### review `<goal-id>`
+
+Entrega de solo lectura con plan, ficheros previstos frente a modificados,
+riesgos, excepciones de Scope, evidencia final y preguntas abiertas. No crea
+PR, rama ni tag.
 
 ### help
 
@@ -365,16 +381,19 @@ docs/
 ├── GOALS.md              # el mapa exhaustivo de goals — todos, con forma de bucle
 ├── STATUS.md             # lo que existe de verdad; se actualiza con el cambio que altera comportamiento
 ├── PROJECT_BRIEF.md      # la fuente funcional (la escribe la entrevista de start)
+├── CAPABILITIES.md        # CI, hooks, skills y MCPs existentes que son relevantes
+├── plans/                # un plan por goal + manifiestos de integración + TEMPLATE.md
 ├── receipts/             # un fichero por ejecución de bucle + TEMPLATE.md
 └── adr/                  # decisiones numeradas; la 0001 registra la adopción del método
 scripts/verify-loop.sh    # runner headless de bucles, gates adaptados a tu stack
+scripts/watch-verify.sh   # revalidación local acotada tras commits
 CLAUDE.md / AGENTS.md     # Working Agreement añadido entre marcadores gestionados
 .claude/hooks/stop-verify.sh + .claude/settings.json   # stop hook de Claude (opcional)
 .codex/hooks/stop-verify.sh + .codex/hooks.json         # Stop hook de Codex (opcional)
 .le-active-verify         # marcador transitorio: el gate del bucle en curso (gitignored)
 ```
 
-### Las cuatro capas de memoria
+### El registro del proyecto
 
 | Capa | Guarda | Se escribe cuando |
 |---|---|---|

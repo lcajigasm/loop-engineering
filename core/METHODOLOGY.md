@@ -35,6 +35,11 @@ RECEIPT  — the file path where this run is recorded
 A loop with a missing field is not a loop; it is an open-ended conversation.
 Refuse to start it until all six are declared.
 
+Before implementation, create a small plan at
+`docs/plans/<goal-id>-<slug>.md`: intended files, phases, risks,
+alternatives and any expected files outside SCOPE. It is a change-control
+artifact, not a second backlog: update it only when scope or risk changes.
+
 ## Verification principles
 
 1. **The generator is never the judge.** The session that writes the code does
@@ -67,6 +72,12 @@ Refuse to start it until all six are declared.
    the exact failure output — not a summary — with the instruction: *fix the
    real cause, not the check*. Weakening a test or skipping an assertion to
    go green is a method violation, not a fix.
+7. **Evidence is reproducible.** A passing receipt records the final command
+   and output, revision, changed files, plan, and scope-check result. A green
+   claim without this evidence is incomplete.
+8. **Scope is enforced at close.** Compare the changed files with SCOPE before
+   closing. Files outside it need a written exception in the plan or belong in
+   another goal; never hide scope expansion behind a passing gate.
 
 ## Human-verified goals
 
@@ -76,18 +87,20 @@ check>` in the goal map. The loop for such a goal ends with a guided manual
 check, and the receipt records **who checked it and what they observed**.
 Never silently downgrade a human gate to "looks right to me".
 
-## The four memory layers
+## The project record
 
 | Layer | What it stores | Write trigger |
 |---|---|---|
 | Agent memory file (`CLAUDE.md` / `AGENTS.md`) | Durable corrections and working rules that would otherwise repeat ("never run the global suite in a goal gate", "encoding detection always needs a BOM test"). | Whenever a loop fails **twice for the same avoidable reason**. |
 | `docs/adr/NNNN-*.md` | Architecture decisions: context, alternatives considered, decision, consequences (including downsides accepted). | On any significant technical decision or reversal. Superseded by a new ADR, never rewritten. |
 | `docs/STATUS.md` | What actually exists, per area/platform: `implemented` / `partial` / `not-started`. | In the same change that alters behavior. |
-| `docs/receipts/<goal-id>-<slug>.md` | The log of one loop run: iterations used, what failed, what fixed it, result (`passed` \| `stuck` \| `budget-exhausted`). | On closing (or abandoning) each loop. |
+| `docs/plans/<goal-id>-<slug>.md` | Intent before edits: scope, phases, risks, alternatives and scope exceptions. | Before starting a goal; revise only when scope/risk changes. |
+| `docs/receipts/<goal-id>-<slug>.md` | The log and reproducible evidence of one loop run: iterations, failures, final command/output, revision, changed files and result. | On closing (or abandoning) each loop. |
 
-An ADR explains a decision that survives forever; a receipt is the log of one
-concrete run. Receipts are what let the **next session resume without the
-human re-explaining anything** — they are read before writing any new code.
+An ADR explains a decision that survives forever; a plan controls a change;
+a receipt proves its result. These files let the **next session resume
+without the human re-explaining anything** — read the relevant plan and
+receipt before writing new code.
 
 ## Budgets and the stuck protocol
 
@@ -129,6 +142,13 @@ and relaunch"**. It is:
   closing goal that runs the full project-wide gate.
 - **Integrate one branch at a time.** Each parallel branch is re-verified
   with an independent gate run before merge — never merge all at once.
+- **Plan integration, too.** `parallel` writes the branch/worktree, overlap
+  check, merge order and post-merge gate to `docs/plans/integration-*.md`.
+  It does not launch agents or create worktrees.
+- **Watch is bounded observation, not automation.** A watcher may re-run a
+  goal gate after new commits, but it has a time budget and stops after three
+  identical failures. It records results; it never edits, restarts loops or
+  runs forever.
 
 ## When NOT to loop
 
@@ -160,3 +180,5 @@ These are the rules `start` writes into every project's working agreement:
 7. **When a target is unreachable, stop and report.** Write up the finding
    and propose alternatives. Explicitly preferred over shipping something
    that looks like it works.
+8. **Plans and evidence stay honest.** Plan before editing; record final
+   evidence and explain every scope exception before closing a goal.

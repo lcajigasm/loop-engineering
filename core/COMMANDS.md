@@ -10,8 +10,8 @@ Conventions used by every command:
   command creates or edits (goals, receipts, ADRs, status, scripts,
   agreements) is written in English, regardless of the conversation language.
 - **Trust files over memory.** Project state is reconstructed from
-  `docs/GOALS.md`, `docs/receipts/`, `docs/STATUS.md`, `docs/adr/` and git
-  history — never from what this session remembers.
+  `docs/GOALS.md`, `docs/plans/`, `docs/receipts/`, `docs/STATUS.md`,
+  `docs/adr/` and git history — never from what this session remembers.
 - **Templates** live in `templates/` next to this file; the methodology in
   `METHODOLOGY.md`. Read them before generating project files.
 - **Goal ids** are `G-<milestone><nn>` (e.g. `G-101`, `G-102`, `G-201`),
@@ -23,6 +23,12 @@ Conventions used by every command:
   line: the goal id). Delete the file when the loop closes. The Claude Code
   stop hook reads it; on Codex it is documentation of what is in flight.
   Recommend adding `.le-active-verify` to `.gitignore` during `start`.
+- **Plan and evidence.** Before editing a goal, create
+  `docs/plans/<goal-id>-<slug>.md` from `templates/PLAN.template.md`. Before
+  close, compare changed files since the loop's base revision with SCOPE;
+  files outside SCOPE require a named exception in that plan. A passing
+  receipt includes the final VERIFY command and output, final revision,
+  changed files, plan path and scope-check result.
 
 Adapter capability notes (referenced by the specs below):
 
@@ -70,8 +76,11 @@ preserved by any regeneration.
 
 Process the functional source, inspect the repo (build files, test configs,
 CI config, directory layout), and come back with **one batched, numbered
-list** of every question needed — not a drip of one-question turns. Cover at
-minimum:
+list** of every question needed — not a drip of one-question turns. First
+discover repo-native capabilities: installed/project skills, configured MCP
+servers, hooks and CI. Record only the ones that affect planning or VERIFY
+in `docs/CAPABILITIES.md` from `templates/CAPABILITIES.template.md`; do not
+install, enable or name irrelevant tools. Cover at minimum:
 
 1. Proposed milestone boundaries — with a suggested cut, not an open
    question.
@@ -102,21 +111,24 @@ Create inside the target project (all in English, from `templates/`):
 2. `docs/STATUS.md` from `templates/STATUS.template.md`, rows seeded from
    the goal map, everything `not-started` (or reflecting reality if the
    project has existing code — audit before writing).
-3. `docs/receipts/TEMPLATE.md` from `templates/RECEIPT.template.md`.
-4. `docs/adr/` with `0001-adopt-loop-engineering.md` (from
+3. `docs/CAPABILITIES.md` from `templates/CAPABILITIES.template.md`, limited
+   to discovered skills, MCPs, hooks and CI that affect planning or VERIFY.
+4. `docs/plans/` with `TEMPLATE.md` from `templates/PLAN.template.md`, and
+   `docs/receipts/TEMPLATE.md` from `templates/RECEIPT.template.md`.
+5. `docs/adr/` with `0001-adopt-loop-engineering.md` (from
    `templates/ADR.template.md`) recording the adoption of this methodology
    and the milestone cut chosen in Phase 2.
-5. A **Working Agreement** section appended to `CLAUDE.md` **and**
+6. A **Working Agreement** section appended to `CLAUDE.md` **and**
    `AGENTS.md` from `templates/WORKING_AGREEMENT.template.md`. Create the
    files if absent. If they exist, append inside
    `<!-- loop-engineering:begin -->` / `<!-- loop-engineering:end -->`
    markers — if the markers already exist, replace only what is between
    them. **Never clobber existing content.**
-6. `scripts/verify-loop.sh` from `scripts/verify-loop.sh` (next to this
-   file), with the `--allowed-tools` default and the example usage in its
-   header adapted to the project's actual stack (the verify commands
-   discovered in Phase 2).
-7. **Only after asking the user**, offer the Stop hook. For Claude Code, copy
+7. `scripts/verify-loop.sh` and `scripts/watch-verify.sh` from `scripts/`
+   (next to this file), with their examples adapted to the project's actual
+   stack. `watch-verify.sh` is optional bounded observation; do not schedule
+   it by default.
+8. **Only after asking the user**, offer the Stop hook. For Claude Code, copy
    `scripts/stop-verify.sh` to `.claude/hooks/stop-verify.sh`, make it
    executable, and wire it in `.claude/settings.json`:
    `{"hooks":{"Stop":[{"hooks":[{"type":"command","command":".claude/hooks/stop-verify.sh"}]}]}}`.
@@ -125,7 +137,7 @@ Create inside the target project (all in English, from `templates/`):
    `{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"sh \"$(git rev-parse --show-toplevel)/.codex/hooks/stop-verify.sh\"","timeout":30}]}]}}`.
    Merge existing configuration; never overwrite it. Codex requires the user
    to review and trust non-managed hooks before they run.
-8. Suggest adding `.le-active-verify` to `.gitignore`.
+9. Suggest adding `.le-active-verify` to `.gitignore`.
 
 ### Phase 4 — Handoff
 
@@ -166,7 +178,7 @@ Resume the project exactly where it was left; pick and run the next eligible
 loop. Safe to run at any moment, any number of times.
 
 1. **Reconstruct state, trust files over memory.** Read `docs/GOALS.md`,
-   every receipt in `docs/receipts/`, `docs/STATUS.md`, and the git log
+   the relevant plans and every receipt in `docs/receipts/`, `docs/STATUS.md`, and the git log
    since the newest receipt. Reconcile inconsistencies explicitly and
    **report what was fixed before proceeding**:
    - goal marked `[~]` whose receipt says `passed` → mark `[x]`;
@@ -176,7 +188,10 @@ loop. Safe to run at any moment, any number of times.
    on` goals are `[x]`), not `[!]` stuck, not `[$]`, respecting milestone
    order. Announce the choice — goal, why it's next, its VERIFY command,
    its budget — before touching code.
-3. **Run the loop**: mark the goal `[~]`, write `.le-active-verify`, then
+3. **Plan, then run the loop**: create or update the goal plan before edits.
+   Show scope, intended files, risks and alternatives; wait for confirmation
+   only if it introduces a material risk or widens scope. Mark the goal `[~]`,
+   record the base revision in the plan, write `.le-active-verify`, then
    implement → run VERIFY → on failure, feed the **raw** failure output into
    the next iteration ("fix the real cause, not the check") → repeat until
    green or a STOP condition fires. Track iteration count and
@@ -184,7 +199,11 @@ loop. Safe to run at any moment, any number of times.
    implement-then-verify cycle.
    - *Codex check*: before declaring green, re-run VERIFY once more in a
      fresh invocation and use that output as the record.
-4. **Close out**: write the receipt (from `docs/receipts/TEMPLATE.md`);
+4. **Close out**: before writing a passing receipt, compare changed files
+   since the plan's base revision with SCOPE. Stop on unexplained out-of-scope
+   files; add a concrete plan exception or split the work. Write the receipt
+   (from `docs/receipts/TEMPLATE.md`) with plan path, base/final revision,
+   changed files, exact final VERIFY output and scope-check result; then
    set the goal's mark (`[x]` / `[!]` / `[$]`) in `GOALS.md`; delete
    `.le-active-verify`; update `STATUS.md` if behavior changed; if the run
    surfaced a repeatable lesson, **propose** (don't silently apply) a
@@ -207,7 +226,8 @@ Run one specific loop.
   confirms. Then ask whether to append it to `docs/GOALS.md` under the
   current milestone with the next free id (default: yes; a loop without a
   tracked goal leaves no trail).
-- Then run steps 3–4 of `auto` (the loop itself, closing out, receipt).
+- Then run steps 3–4 of `auto` (plan, loop, scope check, evidence and
+  receipt).
 - A `Verify: human` goal: implement, then present the guided manual check
   and **wait for the human result**; record who checked and what they
   observed in the receipt.
@@ -239,9 +259,16 @@ Dashboard. Read-only.
    nothing without confirmation).
 2. Report: per milestone — goals passed / in progress / stuck /
    budget-exhausted / pending; the active loop if `.le-active-verify`
-   exists; receipts newer than the last GOALS.md update; and **what's
+   exists; receipts newer than the last GOALS.md update; receipts missing
+   plan/evidence/scope-check fields; goals whose scope was modified after
+   their final evidence; and **what's
    eligible next** (same selection rule as `auto` step 2).
-3. End with a one-line recommendation: the exact next command to run
+3. For every passed goal whose Scope changed after its final revision, propose
+   a precise `STATUS.md` entry under `## Revalidation required`. On
+   confirmation, add it; never relaunch a loop or mutate the goal status.
+   On a later passing revalidation receipt, remove that entry and mark the
+   row's Verification `current` in the same update.
+4. End with a one-line recommendation: the exact next command to run
    (`auto`, `stuck G-xxx`, or `close-milestone Mx`).
 
 ---
@@ -254,12 +281,15 @@ Write or complete the receipt for a finished/abandoned loop.
    (`docs/receipts/<goal-id>-<slug>.md`).
 2. If the receipt exists but is incomplete (e.g. written by
    `verify-loop.sh`, which records only the loop-runner fields), fill in the
-   narrative from the session/git evidence: what failed along the way, what
-   fixed it, anything worth promoting to memory.
+   narrative and reproducible evidence from the session/git evidence: plan,
+   base/final revision, changed files, exact final VERIFY output, scope check,
+   what failed along the way, what fixed it, anything worth promoting to memory.
 3. If missing, write it fresh from `docs/receipts/TEMPLATE.md`. Ask the
    user for anything not reconstructable from evidence (e.g. the human
    observation on a `Verify: human` goal) — don't invent it.
-4. Set Result honestly (`passed` | `stuck` | `budget-exhausted`); update the
+4. A `passed` receipt without final command/output, revision, changed-files
+   list and scope check is incomplete: obtain the evidence or set its result
+   honestly to non-passed. Then update the
    goal's mark in `GOALS.md` to match; delete `.le-active-verify` if it
    points at this goal.
 
@@ -334,14 +364,49 @@ Analyze pending goals and propose what can run concurrently.
    are disjoint and whose `Parallelizable with` annotations agree. Two goals
    in the same scope never parallelize. Flag any pair with an undeclared
    coupling you can see in the code (shared module, shared config).
-2. Claude Code: emit ready-to-run launch commands, one worktree per goal —
+2. Before output, write `docs/plans/integration-<YYYY-MM-DD>.md` from
+   `templates/INTEGRATION.template.md`: one row per candidate with branch or
+   worktree, scope, detected file/config overlap, integration order and
+   post-merge VERIFY. Record undeclared coupling or "None detected".
+3. Claude Code: emit ready-to-run launch commands, one worktree per goal —
    `claude --worktree <goal-slug>` plus the first message to give each
    session (`/le:goal G-xxx`). Remind: integrate one branch at a time, each
    re-verified with an independent `verify` run before merge.
-3. Codex CLI (no worktree flag): emit the sequential fallback plan — the same
+4. Codex CLI (no worktree flag): emit the sequential fallback plan — the same
    goals in dependency-safe order — and note that manual `git worktree` +
    one Codex session per tree is possible but unmanaged.
-4. Execute nothing; this command only plans.
+5. Execute nothing; this command only plans.
+
+---
+
+## watch <goal-id> [minutes]
+
+Observe a goal's branch for a bounded time; never edit code or start a loop.
+
+1. Load the goal, its VERIFY and its receipt. Refuse a `Verify: human` goal.
+   Default to 30 minutes if omitted; require a positive upper bound
+   and use `scripts/watch-verify.sh` when available.
+2. Record the starting revision. On each new commit touching SCOPE, run VERIFY
+   and append the revision, command, raw result and timestamp to the receipt's
+   `Watch evidence` section. Do not alter the receipt result or goal status.
+3. Stop at the time budget, after three identical failures, or if the user
+   interrupts. Report the last result and whether revalidation is required.
+   Never run indefinitely, poll a remote service, edit code or relaunch a
+   loop. Claude Code and Codex follow exactly the same local behavior.
+
+---
+
+## review <goal-id>
+
+Read-only review packet for a completed or in-progress goal.
+
+1. Read its plan, receipt, `git diff <base>...<final>` (or working diff), and
+   final VERIFY evidence. Do not run a new gate or edit files.
+2. Show compactly: goal/scope, intended versus changed files, risks and
+   rejected alternatives, scope exceptions, final verification evidence and
+   unresolved questions. Flag missing evidence, missing plan or scope drift.
+3. Do not create a pull request, branch, tag or external review. The output is
+   the local review-ready handoff for both Claude Code and Codex.
 
 ---
 
